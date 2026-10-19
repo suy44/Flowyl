@@ -50,6 +50,26 @@ describe("Admin Dashboard & Telemetry Endpoints", () => {
     expect(data.metadata.tier).toBe("pro");
   });
 
+  it("POST /v1/keys/free should allow developers to provision a free key without admin auth", async () => {
+    const req = new Request("http://localhost/v1/keys/free", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_name: "Agent Workflow Alpha",
+        email: "alex@example.com",
+      }),
+    });
+    const res = await worker.fetch(req);
+
+    expect(res.status).toBe(201);
+    const data = (await res.json()) as any;
+    expect(data.success).toBe(true);
+    expect(data.api_key).toMatch(/^ak_live_/);
+    expect(data.metadata.owner_id).toBe("Agent Workflow Alpha");
+    expect(data.metadata.tier).toBe("free");
+    expect(data.metadata.monthly_limit).toBe(5000);
+  });
+
   it("POST /v1/track should record page visit telemetry", async () => {
     const req = new Request("http://localhost/v1/track", {
       method: "POST",

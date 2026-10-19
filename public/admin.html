@@ -17,7 +17,39 @@
 <body>
   <div class="admin-bg-grid"></div>
 
-  <div class="admin-wrapper">
+  <!-- Admin Auth Screen Gate (Shown by default until valid secret is submitted) -->
+  <div class="admin-auth-screen" id="admin-auth-screen">
+    <div class="auth-card">
+      <div class="auth-icon-wrap">
+        <img src="flowyl-icon.png" alt="Flowyl Logo" width="56" height="56" style="border-radius: 12px; filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.6));">
+      </div>
+      <h1 class="auth-title">Founder Command Center</h1>
+      <p class="auth-desc">Private operations console. Enter your Founder Admin Secret Key to access real-time telemetry and API key controls.</p>
+
+      <div class="auth-error-banner" id="auth-error-banner" style="display: none;">
+        <span>⚠️</span>
+        <span id="auth-error-text">Unauthorized: Invalid admin secret.</span>
+      </div>
+
+      <form id="form-auth-login">
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label" for="input-auth-secret">Admin Secret Key</label>
+          <input type="password" class="form-input" id="input-auth-secret" placeholder="Enter founder secret..." required autocomplete="current-password" autofocus>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-auth-submit" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+          <span>Unlock Command Center</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <a href="/" class="auth-back-link">← Return to public website</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-wrapper" id="admin-dashboard-wrapper" style="display: none;">
     <!-- Top Bar -->
     <header class="admin-header">
       <div class="header-left">
@@ -33,14 +65,14 @@
           <span class="pulse-dot"></span>
           <span>Live Telemetry</span>
         </div>
-        <button class="btn btn-secondary" id="btn-admin-key" title="Change Admin Secret">
-          🔑 <span id="admin-key-label">Key: admin123</span>
+        <button class="btn btn-secondary" id="btn-logout" title="Lock session & Logout">
+          🔒 Lock & Logout
         </button>
         <button class="btn btn-primary" id="btn-refresh">
           🔄 Refresh
         </button>
-        <a href="/" class="btn btn-secondary" target="_blank">
-          🌐 View Website
+        <a href="/" class="btn btn-secondary">
+          🌐 Public Site
         </a>
       </div>
     </header>
@@ -208,25 +240,6 @@
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="btn-close-modal">Cancel</button>
           <button type="submit" class="btn btn-primary" id="btn-submit-key">Generate Key</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Prompt for Admin Secret -->
-  <div class="modal-overlay" id="modal-admin-key">
-    <div class="modal-card">
-      <h3 class="modal-title">Founder Authentication</h3>
-      <p class="modal-desc">Enter your Flowyl Admin Secret to access live metrics.</p>
-
-      <form id="form-admin-key">
-        <div class="form-group">
-          <label class="form-label" for="input-admin-secret">Admin Secret Key</label>
-          <input type="password" class="form-input" id="input-admin-secret" value="admin123" placeholder="Enter secret..." required>
-        </div>
-
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary" id="btn-save-admin-secret">Unlock Dashboard</button>
         </div>
       </form>
     </div>

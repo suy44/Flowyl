@@ -10,76 +10,34 @@ interface UserKeyRecord {
 
 // In-memory analytics state (persists across warm serverless edge instances)
 class AnalyticsStore {
-  private pageViews: number = 42; // seed with realistic initial counts
-  private uniqueIps: Set<string> = new Set(["init_visitor_1", "init_visitor_2"]);
-  private totalRequests: number = 128;
-  private executedRequests: number = 89;
-  private duplicatesPrevented: number = 36;
-  private rateLimitsMitigated: number = 3;
+  private pageViews: number = 0;
+  private uniqueIps: Set<string> = new Set();
+  private totalRequests: number = 0;
+  private executedRequests: number = 0;
+  private duplicatesPrevented: number = 0;
+  private rateLimitsMitigated: number = 0;
   private presetCounts: Record<string, number> = {
-    airtable: 48,
-    hubspot: 34,
-    notion: 22,
-    slack: 15,
-    whatsapp: 9,
+    airtable: 0,
+    hubspot: 0,
+    notion: 0,
+    slack: 0,
+    whatsapp: 0,
   };
-  private activities: ActivityEvent[] = [
-    {
-      id: "evt_1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-      type: "deduplicate",
-      key_preview: "order:charge:4821",
-      owner_id: "demo_user",
-      target_url: "https://api.stripe.com/v1/invoices",
-      preset: "hubspot",
-      latency_ms: 12,
-    },
-    {
-      id: "evt_2",
-      timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-      type: "execute",
-      key_preview: "airtable:lead:9912",
-      owner_id: "agency_alpha",
-      target_url: "https://api.airtable.com/v0/appXXX/Leads",
-      preset: "airtable",
-      latency_ms: 48,
-    },
-    {
-      id: "evt_3",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      type: "page_view",
-      target_url: "https://flowyl.vercel.app/",
-      latency_ms: 5,
-    },
-  ];
+  private activities: ActivityEvent[] = [];
 
   private registeredKeys: Map<string, UserKeyRecord> = new Map([
     [
-      "ak_test_dev123",
+      "ak_live_founder_admin",
       {
-        key: "ak_test_dev123",
+        key: "ak_live_founder_admin",
         metadata: {
-          owner_id: "developer_sandbox",
+          owner_id: "founder",
           tier: "pro",
           monthly_limit: 500_000,
           max_ttl_seconds: 2_592_000,
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+          created_at: new Date().toISOString(),
         },
-        usage: 64,
-      },
-    ],
-    [
-      "ak_live_default123",
-      {
-        key: "ak_live_default123",
-        metadata: {
-          owner_id: "demo_user",
-          tier: "starter",
-          monthly_limit: 100_000,
-          max_ttl_seconds: 604_800,
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        },
-        usage: 41,
+        usage: 0,
       },
     ],
   ]);

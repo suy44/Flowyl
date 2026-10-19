@@ -29,7 +29,6 @@
         <a href="#how-it-works" id="nav-how-it-works">How It Works</a>
         <a href="#presets" id="nav-presets">Presets</a>
         <a href="#pricing" id="nav-pricing">Pricing</a>
-        <a href="/admin" id="nav-admin">Founder Admin</a>
         <a href="#docs" class="nav-cta" id="nav-docs-cta">Docs</a>
       </div>
       <button class="nav-mobile-toggle" id="nav-mobile-toggle" aria-label="Toggle menu">
@@ -54,10 +53,10 @@
           duplicates get blocked, rate limits get handled. Zero infra to manage.
         </p>
         <div class="hero-actions">
-          <a href="#pricing" class="btn btn-primary" id="hero-cta-start">
+          <button type="button" class="btn btn-primary" id="hero-cta-start">
             Get Free API Key
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
+          </button>
           <a href="#how-it-works" class="btn btn-ghost" id="hero-cta-docs">
             See How It Works
           </a>
@@ -329,7 +328,7 @@
             <li><span class="check">✓</span> All 5 rate-limit presets</li>
             <li><span class="check">✓</span> Community support</li>
           </ul>
-          <a href="#" class="btn btn-outline" id="pricing-free-cta">Get Free API Key</a>
+          <button type="button" class="btn btn-outline" id="pricing-free-cta">Get Free API Key</button>
         </div>
         <div class="pricing-card pricing-card-featured" id="pricing-starter">
           <div class="pricing-popular">Most Popular</div>
@@ -346,7 +345,7 @@
             <li><span class="check">✓</span> Failure alerts (email)</li>
             <li><span class="check">✓</span> Priority support</li>
           </ul>
-          <a href="#" class="btn btn-primary" id="pricing-starter-cta">Start Free Trial</a>
+          <button type="button" class="btn btn-primary" id="pricing-starter-cta" data-plan="Starter ($9/mo)">Start Free Trial</button>
         </div>
         <div class="pricing-card" id="pricing-pro">
           <div class="pricing-tier">Pro</div>
@@ -362,7 +361,7 @@
             <li><span class="check">✓</span> OutcomeGuard integration</li>
             <li><span class="check">✓</span> Dedicated support</li>
           </ul>
-          <a href="#" class="btn btn-outline" id="pricing-pro-cta">Contact Us</a>
+          <button type="button" class="btn btn-outline" id="pricing-pro-cta" data-plan="Pro ($24/mo)">Contact Founder</button>
         </div>
       </div>
     </div>
@@ -426,10 +425,10 @@ npm install n8n-nodes-flowyl</code></pre>
         <h2>Stop duplicates. Start shipping.</h2>
         <p>Get your free API key in 30 seconds. 5,000 requests/month. No credit card.</p>
         <div class="cta-actions">
-          <a href="#" class="btn btn-primary btn-lg" id="final-cta">
+          <button type="button" class="btn btn-primary btn-lg" id="final-cta">
             Get Free API Key
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -473,6 +472,102 @@ npm install n8n-nodes-flowyl</code></pre>
       </div>
     </div>
   </footer>
+
+  <!-- ───── Modal: Get Free API Key ───── -->
+  <div class="modal-overlay" id="modal-get-free-key" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-close-free-key" aria-label="Close dialog">&times;</button>
+      
+      <!-- Step 1: Input Details -->
+      <div id="free-key-step-form">
+        <div class="modal-header-badge">⚡ Instant Developer Key</div>
+        <h3 class="modal-title">Get Your Free Flowyl Key</h3>
+        <p class="modal-subtitle">Start blocking duplicate agent calls immediately. 5,000 calls/month included forever.</p>
+
+        <form id="form-claim-free-key" class="modal-form">
+          <div class="form-group">
+            <label class="form-label" for="free-key-project">Project / Application Name</label>
+            <input type="text" class="form-input" id="free-key-project" placeholder="e.g. Lead Router Agent" value="My First Agent" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="free-key-email">Developer Email (optional, for usage alerts)</label>
+            <input type="email" class="form-input" id="free-key-email" placeholder="developer@example.com">
+          </div>
+
+          <div class="modal-perks">
+            <span>🛡️ <strong>5,000</strong> req/mo</span>
+            <span>⏳ <strong>24h</strong> TTL</span>
+            <span>⚡ <strong>0ms</strong> setup</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="btn-generate-free-key">
+            <span>⚡ Generate Free API Key</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: Instant Key & Code Snippet Display -->
+      <div id="free-key-step-success" class="modal-success-screen" style="display: none;">
+        <div class="success-badge">✓ Active & Ready to Use</div>
+        <h3 class="modal-title">Your Live API Key</h3>
+        <p class="modal-subtitle">Keep this key safe. Use it as your Bearer token in requests to Flowyl.</p>
+
+        <div class="api-key-box">
+          <input type="text" id="display-api-key" readonly>
+          <button type="button" class="btn-copy-key" id="btn-copy-live-key">📋 Copy Key</button>
+        </div>
+
+        <div class="code-snippet-box">
+          <pre><code id="snippet-curl">curl -X POST https://flowyl.vercel.app/v1/execute \
+  -H "Authorization: Bearer <API_KEY>" \
+  -H "X-Flowyl-Key: order-req-001" \
+  -H "X-Flowyl-Preset: slack" \
+  -H "Content-Type: application/json" \
+  -d '{"target_url":"https://hooks.slack.com/services/...","body":{"text":"Order dispatched"}}'</code></pre>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn btn-primary btn-block" id="btn-copy-snippet">
+            📋 Copy curl Example
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-done-free-key" style="min-width: 90px;">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── Modal: Plan Upgrade / Contact ───── -->
+  <div class="modal-overlay" id="modal-upgrade-plan" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-close-upgrade" aria-label="Close dialog">&times;</button>
+      <div class="modal-header-badge">🚀 Priority Automation</div>
+      <h3 class="modal-title" id="upgrade-modal-heading">Upgrade to Flowyl Starter</h3>
+      <p class="modal-subtitle">Unlock higher throughput, 7 to 30-day idempotency windows, and dedicated webhook monitors.</p>
+
+      <form id="form-plan-upgrade" class="modal-form">
+        <div class="form-group">
+          <label class="form-label" for="upgrade-email">Work Email</label>
+          <input type="email" class="form-input" id="upgrade-email" placeholder="you@company.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="upgrade-usecase">Expected Monthly Actions / Workflows</label>
+          <input type="text" class="form-input" id="upgrade-usecase" placeholder="e.g. 100k requests/mo for n8n AI agent">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit-upgrade">
+          <span>Request Priority Access</span>
+        </button>
+      </form>
+
+      <div id="upgrade-success-msg" style="display:none; text-align:center; padding:1.5rem 0;">
+        <div class="success-badge" style="margin-bottom:1rem;">✓ Request Received</div>
+        <h4 style="font-size:1.1rem; margin-bottom:0.5rem; color:#fff;">Welcome aboard!</h4>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">We've sent an invitation and checkout link to your email.</p>
+        <button type="button" class="btn btn-secondary btn-block" id="btn-done-upgrade">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

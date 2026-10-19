@@ -1,16 +1,25 @@
 /**
- * ActionLock — Founder Admin Dashboard Logic
+ * Flowyl — Founder Admin Dashboard Logic
+ * Strict authentication, session storage, and telemetry.
  */
 (function () {
   "use strict";
 
   const STORAGE_KEY = "flowyl_admin_secret";
-  let adminSecret =
-    localStorage.getItem(STORAGE_KEY) ||
-    localStorage.getItem("actionlock_admin_secret") ||
-    "admin123";
+  let adminSecret = sessionStorage.getItem(STORAGE_KEY) || "";
+  let pollIntervalId = null;
 
-  // Elements
+  // Screens
+  const authScreen = document.getElementById("admin-auth-screen");
+  const dashboardWrapper = document.getElementById("admin-dashboard-wrapper");
+  const formAuthLogin = document.getElementById("form-auth-login");
+  const inputAuthSecret = document.getElementById("input-auth-secret");
+  const authErrorBanner = document.getElementById("auth-error-banner");
+  const authErrorText = document.getElementById("auth-error-text");
+  const btnAuthSubmit = document.getElementById("btn-auth-submit");
+  const btnLogout = document.getElementById("btn-logout");
+
+  // Metrics Elements
   const metricUsers = document.getElementById("metric-users-count");
   const metricVisitors = document.getElementById("metric-visitors-count");
   const metricPageviewsSub = document.getElementById("metric-pageviews-sub");
@@ -23,8 +32,6 @@
   const activityTbody = document.getElementById("activity-tbody");
 
   const btnRefresh = document.getElementById("btn-refresh");
-  const btnAdminKey = document.getElementById("btn-admin-key");
-  const adminKeyLabel = document.getElementById("admin-key-label");
 
   // Modals
   const modalCreateKey = document.getElementById("modal-create-key");
@@ -32,21 +39,96 @@
   const btnCloseModal = document.getElementById("btn-close-modal");
   const formCreateKey = document.getElementById("form-create-key");
 
-  const modalAdminKey = document.getElementById("modal-admin-key");
-  const formAdminKey = document.getElementById("form-admin-key");
-  const inputAdminSecret = document.getElementById("input-admin-secret");
+  // Authentication & View Management
+  function showAuthScreen() {
+    if (authScreen) authScreen.style.display = "flex";
+    if (dashboardWrapper) dashboardWrapper.style.display = "none";
+    if (pollIntervalId) {
+      clearInterval(pollIntervalId);
+      pollIntervalId = null;
+    }
+    if (inputAuthSecret) {
+      inputAuthSecret.value = "";
+      inputAuthSecret.focus();
+    }
+    if (authErrorBanner) authErrorBanner.style.display = "none";
+  }
 
-  function updateKeyLabel() {
-    if (adminKeyLabel) {
-      const masked = adminSecret.length > 4 ? `Key: ${adminSecret.substring(0, 3)}***` : `Key: ${adminSecret}`;
-      adminKeyLabel.textContent = masked;
+  function showDashboard() {
+    if (authScreen) authScreen.style.display = "none";
+    if (dashboardWrapper) dashboardWrapper.style.display = "block";
+    loadDashboard();
+    if (!pollIntervalId) {
+      pollIntervalId = setInterval(loadDashboard, 15000);
     }
   }
 
-  updateKeyLabel();
+  function handleLogout() {
+    adminSecret = "";
+    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("actionlock_admin_secret");
+    showAuthScreen();
+  }
+
+  // Handle Login Form Submission
+  if (formAuthLogin) {
+    formAuthLogin.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const entered = inputAuthSecret.value.trim();
+      if (!entered) return;
+
+      if (btnAuthSubmit) {
+        btnAuthSubmit.disabled = true;
+        btnAuthSubmit.textContent = "Verifying credentials...";
+      }
+      if (authErrorBanner) authErrorBanner.style.display = "none";
+
+      try {
+        const res = await fetch("/v1/admin/overview", {
+          headers: {
+            "X-Flowyl-Admin-Key": entered,
+            "X-ActionLock-Admin-Key": entered,
+          },
+        });
+
+        if (res.status === 401 || !res.ok) {
+          throw new Error("Invalid admin secret key. Access denied.");
+        }
+
+        const data = await res.json();
+        adminSecret = entered;
+        sessionStorage.setItem(STORAGE_KEY, adminSecret);
+        renderDashboard(data);
+        showDashboard();
+      } catch (err) {
+        if (authErrorBanner && authErrorText) {
+          authErrorText.textContent = err.message || "Unauthorized access.";
+          authErrorBanner.style.display = "flex";
+        }
+        if (inputAuthSecret) {
+          inputAuthSecret.select();
+        }
+      } finally {
+        if (btnAuthSubmit) {
+          btnAuthSubmit.disabled = false;
+          btnAuthSubmit.innerHTML = `<span>Unlock Command Center</span> <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        }
+      }
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener("click", handleLogout);
+  }
 
   // Fetch Dashboard Overview
   async function loadDashboard() {
+    if (!adminSecret) {
+      showAuthScreen();
+      return;
+    }
+
     try {
       const res = await fetch("/v1/admin/overview", {
         headers: {
@@ -56,7 +138,7 @@
       });
 
       if (res.status === 401) {
-        modalAdminKey.classList.add("open");
+        handleLogout();
         return;
       }
 
@@ -214,27 +296,6 @@
     });
   }
 
-  if (btnAdminKey) {
-    btnAdminKey.addEventListener("click", () => {
-      inputAdminSecret.value = adminSecret;
-      modalAdminKey.classList.add("open");
-    });
-  }
-
-  if (formAdminKey) {
-    formAdminKey.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const val = inputAdminSecret.value.trim();
-      if (val) {
-        adminSecret = val;
-        localStorage.setItem(STORAGE_KEY, adminSecret);
-        updateKeyLabel();
-        modalAdminKey.classList.remove("open");
-        loadDashboard();
-      }
-    });
-  }
-
   if (btnOpenCreateKey) {
     btnOpenCreateKey.addEventListener("click", () => {
       modalCreateKey.classList.add("open");
@@ -287,7 +348,10 @@
       .replace(/'/g, "&#039;");
   }
 
-  // Initial load + interval poll
-  loadDashboard();
-  setInterval(loadDashboard, 15000);
+  // Initial Check: If user already authenticated this session, show dashboard; else show login
+  if (adminSecret) {
+    showDashboard();
+  } else {
+    showAuthScreen();
+  }
 })();

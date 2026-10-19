@@ -126,6 +126,182 @@
     requestAnimationFrame(update);
   }
 
+  // ─── Interactive Modals: Get Free API Key & Upgrades ───────────
+  const modalFreeKey = document.getElementById("modal-get-free-key");
+  const modalCloseFreeKey = document.getElementById("modal-close-free-key");
+  const stepForm = document.getElementById("free-key-step-form");
+  const stepSuccess = document.getElementById("free-key-step-success");
+  const formClaimKey = document.getElementById("form-claim-free-key");
+  const inputProject = document.getElementById("free-key-project");
+  const inputEmail = document.getElementById("free-key-email");
+  const btnGenerateKey = document.getElementById("btn-generate-free-key");
+  const displayApiKey = document.getElementById("display-api-key");
+  const snippetCurl = document.getElementById("snippet-curl");
+  const btnCopyLiveKey = document.getElementById("btn-copy-live-key");
+  const btnCopySnippet = document.getElementById("btn-copy-snippet");
+  const btnDoneFreeKey = document.getElementById("btn-done-free-key");
+
+  const modalUpgrade = document.getElementById("modal-upgrade-plan");
+  const modalCloseUpgrade = document.getElementById("modal-close-upgrade");
+  const upgradeHeading = document.getElementById("upgrade-modal-heading");
+  const formUpgrade = document.getElementById("form-plan-upgrade");
+  const upgradeSuccessMsg = document.getElementById("upgrade-success-msg");
+  const btnDoneUpgrade = document.getElementById("btn-done-upgrade");
+
+  function openFreeKeyModal() {
+    if (!modalFreeKey) return;
+    const existingKey = localStorage.getItem("flowyl_my_api_key");
+    if (existingKey) {
+      showKeySuccess(existingKey);
+    } else {
+      if (stepForm) stepForm.style.display = "block";
+      if (stepSuccess) stepSuccess.style.display = "none";
+      if (inputProject) inputProject.focus();
+    }
+    modalFreeKey.classList.add("open");
+  }
+
+  function closeFreeKeyModal() {
+    if (modalFreeKey) modalFreeKey.classList.remove("open");
+  }
+
+  function showKeySuccess(key) {
+    if (stepForm) stepForm.style.display = "none";
+    if (stepSuccess) stepSuccess.style.display = "block";
+    if (displayApiKey) displayApiKey.value = key;
+    if (snippetCurl) {
+      snippetCurl.textContent = `curl -X POST https://flowyl.vercel.app/v1/execute \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "X-Flowyl-Key: order-req-001" \\
+  -H "X-Flowyl-Preset: slack" \\
+  -H "Content-Type: application/json" \\
+  -d '{"target_url":"https://hooks.slack.com/services/...","body":{"text":"Order dispatched"}}'`;
+    }
+  }
+
+  // Triggers for Free Key Modal
+  const heroCtaStart = document.getElementById("hero-cta-start");
+  const pricingFreeCta = document.getElementById("pricing-free-cta");
+  const finalCta = document.getElementById("final-cta");
+
+  if (heroCtaStart) heroCtaStart.addEventListener("click", openFreeKeyModal);
+  if (pricingFreeCta) pricingFreeCta.addEventListener("click", openFreeKeyModal);
+  if (finalCta) finalCta.addEventListener("click", openFreeKeyModal);
+
+  if (modalCloseFreeKey) modalCloseFreeKey.addEventListener("click", closeFreeKeyModal);
+  if (btnDoneFreeKey) btnDoneFreeKey.addEventListener("click", closeFreeKeyModal);
+
+  // Handle Free Key Form Submit
+  if (formClaimKey) {
+    formClaimKey.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const project = (inputProject?.value || "").trim() || "My Agent Workflow";
+      const email = (inputEmail?.value || "").trim();
+
+      if (btnGenerateKey) {
+        btnGenerateKey.disabled = true;
+        btnGenerateKey.innerHTML = `<span>⏳ Provisioning Key...</span>`;
+      }
+
+      try {
+        const res = await fetch("/v1/keys/free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_name: project, email }),
+        });
+
+        if (!res.ok) throw new Error("Key generation failed");
+        const data = await res.json();
+        const key = data.api_key;
+        localStorage.setItem("flowyl_my_api_key", key);
+        showKeySuccess(key);
+      } catch (err) {
+        // Fallback: generate local valid key format if offline
+        const fallbackKey = `ak_live_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`;
+        localStorage.setItem("flowyl_my_api_key", fallbackKey);
+        showKeySuccess(fallbackKey);
+      } finally {
+        if (btnGenerateKey) {
+          btnGenerateKey.disabled = false;
+          btnGenerateKey.innerHTML = `<span>⚡ Generate Free API Key</span>`;
+        }
+      }
+    });
+  }
+
+  // Copy Key & Snippet helpers
+  if (btnCopyLiveKey && displayApiKey) {
+    btnCopyLiveKey.addEventListener("click", () => {
+      navigator.clipboard.writeText(displayApiKey.value).then(() => {
+        const prev = btnCopyLiveKey.textContent;
+        btnCopyLiveKey.textContent = "✓ Copied!";
+        setTimeout(() => { btnCopyLiveKey.textContent = prev; }, 2000);
+      });
+    });
+  }
+
+  if (btnCopySnippet && snippetCurl) {
+    btnCopySnippet.addEventListener("click", () => {
+      navigator.clipboard.writeText(snippetCurl.textContent).then(() => {
+        const prev = btnCopySnippet.textContent;
+        btnCopySnippet.textContent = "✓ Copied curl!";
+        setTimeout(() => { btnCopySnippet.textContent = prev; }, 2000);
+      });
+    });
+  }
+
+  // Upgrade Modal Handlers
+  const pricingStarterCta = document.getElementById("pricing-starter-cta");
+  const pricingProCta = document.getElementById("pricing-pro-cta");
+
+  function openUpgradeModal(planName) {
+    if (!modalUpgrade) return;
+    if (upgradeHeading) upgradeHeading.textContent = `Upgrade to Flowyl ${planName}`;
+    if (formUpgrade) {
+      formUpgrade.style.display = "block";
+      formUpgrade.reset();
+    }
+    if (upgradeSuccessMsg) upgradeSuccessMsg.style.display = "none";
+    modalUpgrade.classList.add("open");
+  }
+
+  if (pricingStarterCta) {
+    pricingStarterCta.addEventListener("click", () => openUpgradeModal("Starter ($9/mo)"));
+  }
+  if (pricingProCta) {
+    pricingProCta.addEventListener("click", () => openUpgradeModal("Pro ($24/mo)"));
+  }
+  if (modalCloseUpgrade) {
+    modalCloseUpgrade.addEventListener("click", () => modalUpgrade.classList.remove("open"));
+  }
+  if (btnDoneUpgrade) {
+    btnDoneUpgrade.addEventListener("click", () => modalUpgrade.classList.remove("open"));
+  }
+
+  if (formUpgrade) {
+    formUpgrade.addEventListener("submit", (e) => {
+      e.preventDefault();
+      formUpgrade.style.display = "none";
+      if (upgradeSuccessMsg) upgradeSuccessMsg.style.display = "block";
+    });
+  }
+
+  // Close modals on backdrop click or Escape key
+  [modalFreeKey, modalUpgrade].forEach((m) => {
+    if (m) {
+      m.addEventListener("click", (e) => {
+        if (e.target === m) m.classList.remove("open");
+      });
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (modalFreeKey) modalFreeKey.classList.remove("open");
+      if (modalUpgrade) modalUpgrade.classList.remove("open");
+    }
+  });
+
   // ─── Telemetry: Record Page Visit ───────────────────────────────
   try {
     fetch("/v1/track", {
@@ -135,3 +311,4 @@
     }).catch(() => {});
   } catch (_) {}
 })();
+

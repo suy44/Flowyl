@@ -46,8 +46,34 @@ export async function handleAdminOverview(request: Request, env?: Env): Promise<
 }
 
 /**
+ * POST /v1/keys/free
+ * Public endpoint allowing developers to provision a free API key with 5,000 req/mo.
+ */
+export async function handleCreateFreeKey(request: Request): Promise<Response> {
+  let body: { project_name?: string; email?: string } = {};
+  try {
+    body = (await request.json()) as any;
+  } catch {
+    body = {};
+  }
+
+  const projectName = (body.project_name || "").trim();
+  const email = (body.email || "").trim();
+  const ownerId = projectName || (email ? email.split("@")[0] : `dev_${Math.random().toString(36).substring(2, 8)}`);
+
+  const result = analytics.createKey(ownerId, "free");
+
+  return jsonResponse({
+    success: true,
+    message: "Welcome to Flowyl! Your free API key is ready.",
+    api_key: result.key,
+    metadata: result.metadata,
+  }, 201);
+}
+
+/**
  * POST /v1/admin/keys
- * Generates a new API key for a customer/developer.
+ * Generates a new API key for a customer/developer (Admin only).
  */
 export async function handleAdminCreateKey(request: Request, env?: Env): Promise<Response> {
   if (!verifyAdminAuth(request, env)) {

@@ -9,6 +9,7 @@ import {
   handleAdminCreateKey,
   handleAdminRevokeKey,
   handleTrackVisit,
+  handleCreateFreeKey,
 } from "./routes/admin";
 import { errorResponse, corsPreflightResponse, jsonResponse } from "./utils/response";
 
@@ -21,6 +22,7 @@ export { RateLimitQueue } from "./durable-objects/RateLimitQueue";
  * Router:
  *   GET    /                 → API overview & discovery
  *   GET    /v1/health        → Public health check
+ *   POST   /v1/keys/free     → Generate free API key
  *   POST   /v1/execute       → Main proxy endpoint (auth required)
  *   GET    /v1/status/:key   → Check idempotency key status (auth required)
  *   DELETE /v1/keys/:key     → Invalidate cached execution (auth required)
@@ -46,6 +48,11 @@ export default {
       return handleTrackVisit(request);
     }
 
+    // Public: Provision free developer API key
+    if (path === "/v1/keys/free" && request.method === "POST") {
+      return handleCreateFreeKey(request);
+    }
+
     // Root API overview
     if (path === "/" || path === "") {
       return jsonResponse({
@@ -55,6 +62,7 @@ export default {
         status: "online",
         endpoints: {
           health: "GET /v1/health",
+          free_key: "POST /v1/keys/free",
           execute: "POST /v1/execute",
           status: "GET /v1/status/:key",
           delete_key: "DELETE /v1/keys/:key",
