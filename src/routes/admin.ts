@@ -29,7 +29,17 @@ function verifyAdminAuth(request: Request, env?: Env): boolean {
 
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-  return token === adminSecret || adminKeyHeader === adminSecret;
+  let decodedToken = token;
+  let decodedKey = adminKeyHeader;
+  try { decodedToken = decodeURIComponent(token); } catch {}
+  try { decodedKey = decodeURIComponent(adminKeyHeader); } catch {}
+
+  return (
+    token === adminSecret ||
+    adminKeyHeader === adminSecret ||
+    decodedToken === adminSecret ||
+    decodedKey === adminSecret
+  );
 }
 
 /**

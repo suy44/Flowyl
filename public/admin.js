@@ -6,7 +6,27 @@
   "use strict";
 
   const STORAGE_KEY = "flowyl_admin_secret";
-  let adminSecret = sessionStorage.getItem(STORAGE_KEY) || "";
+
+  /**
+   * Sanitizes header values to ensure they contain only ISO-8859-1 printable ASCII (0x20 - 0x7E).
+   * Prevents browser TypeError: "Failed to read the 'headers' property from 'RequestInit': String contains non ISO-8859-1 code point"
+   */
+  function sanitizeHeaderValue(val) {
+    if (val === null || val === undefined) return "";
+    return String(val)
+      .trim()
+      .replace(/[^\x20-\x7E]/g, "");
+  }
+
+  function getSafeAdminHeaders(secret) {
+    const clean = sanitizeHeaderValue(secret);
+    return {
+      "X-Flowyl-Admin-Key": clean,
+      "X-ActionLock-Admin-Key": clean,
+    };
+  }
+
+  let adminSecret = sanitizeHeaderValue(sessionStorage.getItem(STORAGE_KEY) || "");
   let pollIntervalId = null;
 
   // Screens
@@ -75,7 +95,7 @@
   if (formAuthLogin) {
     formAuthLogin.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const entered = inputAuthSecret.value.trim();
+      const entered = sanitizeHeaderValue(inputAuthSecret.value);
       if (!entered) return;
 
       if (btnAuthSubmit) {
@@ -86,10 +106,7 @@
 
       try {
         const res = await fetch("/v1/admin/overview", {
-          headers: {
-            "X-Flowyl-Admin-Key": entered,
-            "X-ActionLock-Admin-Key": entered,
-          },
+          headers: getSafeAdminHeaders(entered),
         });
 
         if (res.status === 401 || !res.ok) {
@@ -156,10 +173,7 @@
 
     try {
       const res = await fetch("/v1/admin/overview", {
-        headers: {
-          "X-Flowyl-Admin-Key": adminSecret,
-          "X-ActionLock-Admin-Key": adminSecret,
-        },
+        headers: getSafeAdminHeaders(adminSecret),
       });
 
       let data = {};
@@ -322,10 +336,7 @@
     try {
       const res = await fetch(`/v1/admin/keys/${encodeURIComponent(key)}`, {
         method: "DELETE",
-        headers: {
-          "X-Flowyl-Admin-Key": adminSecret,
-          "X-ActionLock-Admin-Key": adminSecret,
-        },
+        headers: getSafeAdminHeaders(adminSecret),
       });
       if (!res.ok) throw new Error("Revocation failed");
       loadDashboard();
@@ -367,8 +378,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Flowyl-Admin-Key": adminSecret,
-            "X-ActionLock-Admin-Key": adminSecret,
+            ...getSafeAdminHeaders(adminSecret),
           },
           body: JSON.stringify({ owner_id: owner, tier }),
         });

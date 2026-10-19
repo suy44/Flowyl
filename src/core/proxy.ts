@@ -25,11 +25,28 @@ export async function executeProxiedRequest(
 
   // Build the outgoing fetch request
   const method = (request.method ?? "GET").toUpperCase();
-  const headers = new Headers(request.headers ?? {});
+  const headers = new Headers();
+
+  // Safely populate headers, converting non-ISO-8859-1 characters to URI encoded bytes
+  if (request.headers && typeof request.headers === "object") {
+    for (const [rawKey, rawVal] of Object.entries(request.headers)) {
+      if (typeof rawKey === "string" && rawVal !== undefined && rawVal !== null) {
+        const cleanKey = rawKey.replace(/[^\x20-\x7E]/g, "").trim();
+        const cleanVal = String(rawVal).replace(/[^\x00-\xFF]/g, (ch) => encodeURIComponent(ch));
+        if (cleanKey) {
+          try {
+            headers.set(cleanKey, cleanVal);
+          } catch {
+            // Ignore malformed header
+          }
+        }
+      }
+    }
+  }
 
   // Ensure we identify ourselves
   if (!headers.has("User-Agent")) {
-    headers.set("User-Agent", "ActionLock/0.1.0");
+    headers.set("User-Agent", "Flowyl/0.1.0");
   }
 
   const fetchInit: RequestInit = {
