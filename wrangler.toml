@@ -1,0 +1,31 @@
+name = "flowyl"
+main = "src/index.ts"
+compatibility_date = "2024-10-18"
+compatibility_flags = ["nodejs_compat"]
+
+# KV Namespace for idempotency keys + cached responses
+[[kv_namespaces]]
+binding = "IDEMPOTENCY_STORE"
+id = "PLACEHOLDER_KV_ID"
+preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
+
+# KV Namespace for API keys
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "PLACEHOLDER_APIKEYS_KV_ID"
+preview_id = "PLACEHOLDER_APIKEYS_KV_PREVIEW_ID"
+
+# Durable Objects for rate-limit queues
+[durable_objects]
+bindings = [
+  { name = "RATE_LIMIT_QUEUE", class_name = "RateLimitQueue" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimitQueue"]
+
+[vars]
+ENVIRONMENT = "production"
+MAX_REQUEST_BODY_SIZE = "1048576"  # 1MB
+DEFAULT_TTL_SECONDS = "86400"     # 24 hours

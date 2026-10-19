@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowyl — Idempotency & Rate Limit Gateway for AI Agents</title>
+  <meta name="description" content="Stop duplicate emails, invoices, and double charges. Flowyl is an intelligent HTTP proxy gateway that prevents AI agents and workflows from executing duplicate actions and manages rate limiting automatically.">
+  <meta name="keywords" content="Flowyl, idempotency, rate limiting, API gateway, proxy, n8n, Make, LangGraph, AI agents, automation, deduplication, HTTP 429">
+  <meta name="theme-color" content="#080b14">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ───── Navigation ───── -->
+  <nav id="main-nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" id="nav-logo">
+        <img src="flowyl-icon.png" alt="Flowyl Logo" class="nav-logo-img" width="32" height="32">
+        <span class="logo-text">Flowyl</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features" id="nav-features">Features</a>
+        <a href="#how-it-works" id="nav-how-it-works">How It Works</a>
+        <a href="#presets" id="nav-presets">Presets</a>
+        <a href="#pricing" id="nav-pricing">Pricing</a>
+        <a href="/admin" id="nav-admin">Founder Admin</a>
+        <a href="#docs" class="nav-cta" id="nav-docs-cta">Docs</a>
+      </div>
+      <button class="nav-mobile-toggle" id="nav-mobile-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ───── Hero ───── -->
+  <header id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-grid-bg"></div>
+    <div class="hero-split">
+      <!-- Left Column: Copy & Actions -->
+      <div class="hero-left">
+        <h1 id="hero-title">
+          Stop your agents from
+          <span class="gradient-text">executing actions twice.</span>
+        </h1>
+        <p class="hero-subtitle" id="hero-subtitle">
+          One HTTP endpoint. Send any outbound API call through Flowyl with an idempotency key — 
+          duplicates get blocked, rate limits get handled. Zero infra to manage.
+        </p>
+        <div class="hero-actions">
+          <a href="#pricing" class="btn btn-primary" id="hero-cta-start">
+            Get Free API Key
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#how-it-works" class="btn btn-ghost" id="hero-cta-docs">
+            See How It Works
+          </a>
+        </div>
+        <div class="hero-stats" id="hero-stats">
+          <div class="stat">
+            <span class="stat-number" data-count="5">5</span>
+            <span class="stat-label">API Presets</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">&lt;50ms</span>
+            <span class="stat-label">Dedup Latency</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">0$</span>
+            <span class="stat-label">AI Cost</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Code Window -->
+      <div class="hero-right">
+        <div class="hero-code" id="hero-code">
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <span class="code-title">Send through Flowyl Gateway</span>
+            </div>
+            <pre class="code-body"><code><span class="code-keyword">POST</span> <span class="code-url">https://flowyl.vercel.app/v1/execute</span>
+
+<span class="code-comment">// Headers</span>
+<span class="code-key">Authorization:</span> <span class="code-string">Bearer ak_live_xxx</span>
+<span class="code-key">X-Flowyl-Key:</span> <span class="code-string">send_invoice:order_4821</span>
+<span class="code-key">X-Flowyl-Preset:</span> <span class="code-string">airtable</span>
+
+<span class="code-comment">// Body — your original API call</span>
+{
+  <span class="code-key">"method":</span> <span class="code-string">"POST"</span>,
+  <span class="code-key">"url":</span> <span class="code-string">"https://api.airtable.com/v0/app.../Invoices"</span>,
+  <span class="code-key">"headers":</span> { <span class="code-key">"Authorization":</span> <span class="code-string">"Bearer pat_xxx"</span> },
+  <span class="code-key">"body":</span> { <span class="code-key">"fields":</span> { <span class="code-key">"Amount":</span> <span class="code-number">299</span> } }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ───── Problem Section ───── -->
+  <section id="problem" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">The Problem</span>
+        <h2>Your agents don't know they already did it.</h2>
+        <p class="section-desc">When workflows fail mid-execution and retry, they re-run every step. No memory. No deduplication. Just chaos.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card" id="problem-duplicate-emails">
+          <div class="problem-icon">📧</div>
+          <div class="problem-multiplier">×3</div>
+          <h3>Duplicate Emails</h3>
+          <p>Your welcome flow retried and sent the same email to your customer 3 times. They're confused. You look unprofessional.</p>
+        </div>
+        <div class="problem-card" id="problem-duplicate-invoices">
+          <div class="problem-icon">🧾</div>
+          <div class="problem-multiplier">×4</div>
+          <h3>Ghost Invoices</h3>
+          <p>A timeout caused 4 duplicate Stripe invoices. Now you're refunding angry customers and explaining yourself.</p>
+        </div>
+        <div class="problem-card" id="problem-double-charges">
+          <div class="problem-icon">💸</div>
+          <div class="problem-multiplier">×2</div>
+          <h3>Double Charges</h3>
+          <p>The agent retried a payment webhook handler. Balance deducted twice. Your support inbox is on fire.</p>
+        </div>
+        <div class="problem-card problem-card-rate" id="problem-rate-limit">
+          <div class="problem-icon">🚫</div>
+          <div class="problem-multiplier">429</div>
+          <h3>Rate Limit Crashes</h3>
+          <p>200 rows to process? Airtable/Notion says "Too Many Requests" and your entire batch fails. Random Sleep nodes aren't the answer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Features ───── -->
+  <section id="features" class="section section-dark">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Features</span>
+        <h2>One endpoint. Two superpowers.</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card feature-main" id="feature-idempotency">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">🔒</div>
+          </div>
+          <h3>Idempotency Shield</h3>
+          <p>Every request gets a unique key. If the same key is seen within the TTL window, Flowyl returns the cached response instantly — the real API is never called twice.</p>
+          <ul class="feature-list">
+            <li>Custom TTL per request (1 min → 30 days)</li>
+            <li>Cached response returned on dedup</li>
+            <li>Manual key invalidation via API</li>
+            <li>Namespaced per API key — zero cross-talk</li>
+          </ul>
+        </div>
+        <div class="feature-card feature-main" id="feature-rate-limit">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">⚡</div>
+          </div>
+          <h3>Smart Rate Limiter</h3>
+          <p>Requests that would trigger a 429 are automatically queued and drained at the target API's actual rate. Respects Retry-After headers natively.</p>
+          <ul class="feature-list">
+            <li>Token bucket algorithm per destination</li>
+            <li>Pre-configured presets for popular APIs</li>
+            <li>Automatic retry with exponential backoff</li>
+            <li>Poll-based status tracking</li>
+          </ul>
+        </div>
+      </div>
+      <div class="features-secondary">
+        <div class="feature-small" id="feature-ssrf">
+          <span class="feature-small-icon">🛡️</span>
+          <h4>SSRF Protection</h4>
+          <p>Private/internal IPs are blocked automatically.</p>
+        </div>
+        <div class="feature-small" id="feature-cors">
+          <span class="feature-small-icon">🌐</span>
+          <h4>CORS Ready</h4>
+          <p>Full CORS support — call from anywhere.</p>
+        </div>
+        <div class="feature-small" id="feature-edge">
+          <span class="feature-small-icon">🌍</span>
+          <h4>Edge Deployed</h4>
+          <p>Runs globally on the edge — sub-50ms dedup checks worldwide.</p>
+        </div>
+        <div class="feature-small" id="feature-zero-config">
+          <span class="feature-small-icon">🎯</span>
+          <h4>Zero Config</h4>
+          <p>No Redis, no Postgres, no infra. Just an HTTP header.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── How It Works ───── -->
+  <section id="how-it-works" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">How It Works</span>
+        <h2>Three headers. That's it.</h2>
+        <p class="section-desc">Wrap your outbound API call in a POST to Flowyl. Add the headers. Done.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card" id="step-1">
+          <div class="step-number">01</div>
+          <h3>Add Your Key</h3>
+          <p>Set <code>X-Flowyl-Key</code> to a unique identifier for this action. Example: <code>send_invoice:order_4821</code></p>
+          <div class="step-visual">
+            <code class="step-code">X-Flowyl-Key: send_invoice:order_4821</code>
+          </div>
+        </div>
+        <div class="step-connector"><div class="connector-line"></div></div>
+        <div class="step-card" id="step-2">
+          <div class="step-number">02</div>
+          <h3>Pick a Preset</h3>
+          <p>Optionally set <code>X-Flowyl-Preset</code> to enable smart rate limiting for the target API.</p>
+          <div class="step-visual">
+            <code class="step-code">X-Flowyl-Preset: airtable</code>
+          </div>
+        </div>
+        <div class="step-connector"><div class="connector-line"></div></div>
+        <div class="step-card" id="step-3">
+          <div class="step-number">03</div>
+          <h3>Flowyl Handles the Rest</h3>
+          <p>Duplicate? Returns cached response. Rate limited? Queued and retried. Success? Stored and returned.</p>
+          <div class="step-visual status-badges">
+            <span class="status-badge executed">✅ executed</span>
+            <span class="status-badge deduplicated">🔄 deduplicated</span>
+            <span class="status-badge queued">⏳ queued</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Presets ───── -->
+  <section id="presets" class="section section-dark">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Presets</span>
+        <h2>Zero-config rate limits for popular APIs.</h2>
+        <p class="section-desc">Each preset knows the exact rate limits, burst capacity, and retry strategy for the target API.</p>
+      </div>
+      <div class="presets-grid">
+        <div class="preset-card" id="preset-airtable">
+          <div class="preset-logo">📊</div>
+          <h3>Airtable</h3>
+          <div class="preset-stats">
+            <div class="preset-stat"><span class="preset-stat-value">5</span> req/s</div>
+            <div class="preset-stat"><span class="preset-stat-value">10</span> burst</div>
+          </div>
+          <code class="preset-code">X-Flowyl-Preset: airtable</code>
+        </div>
+        <div class="preset-card" id="preset-notion">
+          <div class="preset-logo">📝</div>
+          <h3>Notion</h3>
+          <div class="preset-stats">
+            <div class="preset-stat"><span class="preset-stat-value">3</span> req/s</div>
+            <div class="preset-stat"><span class="preset-stat-value">5</span> burst</div>
+          </div>
+          <code class="preset-code">X-Flowyl-Preset: notion</code>
+        </div>
+        <div class="preset-card" id="preset-hubspot">
+          <div class="preset-logo">🟠</div>
+          <h3>HubSpot</h3>
+          <div class="preset-stats">
+            <div class="preset-stat"><span class="preset-stat-value">10</span> req/s</div>
+            <div class="preset-stat"><span class="preset-stat-value">20</span> burst</div>
+          </div>
+          <code class="preset-code">X-Flowyl-Preset: hubspot</code>
+        </div>
+        <div class="preset-card" id="preset-slack">
+          <div class="preset-logo">💬</div>
+          <h3>Slack</h3>
+          <div class="preset-stats">
+            <div class="preset-stat"><span class="preset-stat-value">1</span> req/s</div>
+            <div class="preset-stat"><span class="preset-stat-value">3</span> burst</div>
+          </div>
+          <code class="preset-code">X-Flowyl-Preset: slack</code>
+        </div>
+        <div class="preset-card" id="preset-whatsapp">
+          <div class="preset-logo">📱</div>
+          <h3>WhatsApp</h3>
+          <div class="preset-stats">
+            <div class="preset-stat"><span class="preset-stat-value">80</span> msg/s</div>
+            <div class="preset-stat"><span class="preset-stat-value">100</span> burst</div>
+          </div>
+          <code class="preset-code">X-Flowyl-Preset: whatsapp</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Pricing ───── -->
+  <section id="pricing" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Pricing</span>
+        <h2>Start free. Scale when you're ready.</h2>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card" id="pricing-free">
+          <div class="pricing-tier">Free</div>
+          <div class="pricing-price">
+            <span class="price-amount">$0</span>
+            <span class="price-period">/month</span>
+          </div>
+          <p class="pricing-desc">For side projects and testing</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 5,000 protected requests/mo</li>
+            <li><span class="check">✓</span> 24-hour key retention</li>
+            <li><span class="check">✓</span> All 5 rate-limit presets</li>
+            <li><span class="check">✓</span> Community support</li>
+          </ul>
+          <a href="#" class="btn btn-outline" id="pricing-free-cta">Get Free API Key</a>
+        </div>
+        <div class="pricing-card pricing-card-featured" id="pricing-starter">
+          <div class="pricing-popular">Most Popular</div>
+          <div class="pricing-tier">Starter</div>
+          <div class="pricing-price">
+            <span class="price-amount">$9</span>
+            <span class="price-period">/month</span>
+          </div>
+          <p class="pricing-desc">For production automations</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 100,000 protected requests/mo</li>
+            <li><span class="check">✓</span> 7-day key retention</li>
+            <li><span class="check">✓</span> All presets + custom presets</li>
+            <li><span class="check">✓</span> Failure alerts (email)</li>
+            <li><span class="check">✓</span> Priority support</li>
+          </ul>
+          <a href="#" class="btn btn-primary" id="pricing-starter-cta">Start Free Trial</a>
+        </div>
+        <div class="pricing-card" id="pricing-pro">
+          <div class="pricing-tier">Pro</div>
+          <div class="pricing-price">
+            <span class="price-amount">$24</span>
+            <span class="price-period">/month</span>
+          </div>
+          <p class="pricing-desc">For agencies and heavy workloads</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 500,000 protected requests/mo</li>
+            <li><span class="check">✓</span> 30-day key retention</li>
+            <li><span class="check">✓</span> Custom presets + webhooks</li>
+            <li><span class="check">✓</span> OutcomeGuard integration</li>
+            <li><span class="check">✓</span> Dedicated support</li>
+          </ul>
+          <a href="#" class="btn btn-outline" id="pricing-pro-cta">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── n8n Integration ───── -->
+  <section id="n8n" class="section section-dark">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">n8n Integration</span>
+        <h2>Drag. Drop. Protected.</h2>
+        <p class="section-desc">Install the Flowyl community node in n8n and protect any workflow step with a single drag-and-drop.</p>
+      </div>
+      <div class="n8n-showcase">
+        <div class="n8n-install">
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dots">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <span class="code-title">Install via npm</span>
+            </div>
+            <pre class="code-body"><code><span class="code-comment"># In your n8n instance</span>
+npm install n8n-nodes-flowyl</code></pre>
+          </div>
+        </div>
+        <div class="n8n-features-list">
+          <div class="n8n-feature">
+            <span class="n8n-feature-icon">🔌</span>
+            <div>
+              <h4>Community Node</h4>
+              <p>Available in the n8n node directory. Install with one click.</p>
+            </div>
+          </div>
+          <div class="n8n-feature">
+            <span class="n8n-feature-icon">⚙️</span>
+            <div>
+              <h4>Expression-Based Keys</h4>
+              <p>Use n8n expressions to build dynamic idempotency keys: <code>{{$node.trigger.json.event_id}}</code></p>
+            </div>
+          </div>
+          <div class="n8n-feature">
+            <span class="n8n-feature-icon">🎛️</span>
+            <div>
+              <h4>Preset Dropdown</h4>
+              <p>Pick your target API from a dropdown — rate limits configured automatically.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── CTA ───── -->
+  <section id="cta" class="section">
+    <div class="container">
+      <div class="cta-block">
+        <div class="cta-glow"></div>
+        <h2>Stop duplicates. Start shipping.</h2>
+        <p>Get your free API key in 30 seconds. 5,000 requests/month. No credit card.</p>
+        <div class="cta-actions">
+          <a href="#" class="btn btn-primary btn-lg" id="final-cta">
+            Get Free API Key
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Footer ───── -->
+  <footer id="main-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <img src="flowyl-icon.png" alt="Flowyl" class="nav-logo-img" width="28" height="28">
+            <span class="logo-text" style="font-weight:700; font-size:1.25rem;">Flowyl</span>
+          </div>
+          <p class="footer-tagline">Idempotency & rate limit gateway for AI agents.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#presets">Presets</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#docs">Docs</a>
+        </div>
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <a href="#">API Reference</a>
+          <a href="#">n8n Node</a>
+          <a href="#">Python SDK</a>
+          <a href="#">TypeScript SDK</a>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <a href="#">Blog</a>
+          <a href="#">Status</a>
+          <a href="#">Terms</a>
+          <a href="#">Privacy</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Flowyl. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
